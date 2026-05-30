@@ -1,0 +1,61 @@
+body {
+  background: repeating-radial-gradient(circle at 0 0, #ffffed,#ffffaf 50px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.top_container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.page_card { 
+
+  background: #ffffed;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-style: double;
+  width: 75%;
+  margin-top: 5%;
+  padding-bottom:2%;
+  justify-content:center;
+  padding-left: 1%;
+  padding-right: 1%;
+
+}
+
+.page_head_subsection{
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+
+}
+#page_head_subtitle{
+
+  text-color: #000000;
+  font-size: 1rem;
+
+}
+
+#page_head_title{
+
+  text-decoration: none;
+  color: black;
+
+}
+
+.middle_container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.end_container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
