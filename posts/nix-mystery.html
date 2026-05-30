@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nix Mystery — Shriharsh S. Acharya</title>
+  <link href="../style.css" rel="stylesheet">
+  <style>
+    pre {
+      background: #f5f5dc;
+      border: 1px solid #ccc;
+      padding: 0.75rem 1rem;
+      overflow-x: auto;
+      width: 90%;
+      font-size: 0.875rem;
+    }
+    code {
+      font-family: monospace;
+      background: #f5f5dc;
+      padding: 0.1rem 0.3rem;
+    }
+    blockquote {
+      border-left: 3px solid #999;
+      margin-left: 0;
+      padding-left: 1rem;
+      color: #444;
+    }
+    table { border-collapse: collapse; width: 90%; margin: 1rem 0; }
+    th, td { border: 1px solid #aaa; padding: 0.4rem 0.75rem; text-align: left; }
+  </style>
+</head>
+<body>
+
+
+<div class="middle_container">
+  <div class="page_card">
+    <h2>Nix Mystery</h2>
+    <p id="page_head_subtitle">1 February 2026 · 975 words · ~5 mins</p>
+
+    <div class="page_head_subsection">
+
+      <p>
+        I've been wanting to use nix for a long time, and it seems that the time has finally come.
+      </p>
+      <p>
+        Nix always has been something familiar but unknown to me for a while.
+        I know Nix lets you manage packages in a declarative fashion and it is reproducible.
+        But in all honesty, these are just buzz words which I really don't understand just yet.
+        So, I'll just look into what actually Nix is.
+      </p>
+
+      <h3>Setup</h3>
+
+      <h4><em>search?q=nix</em></h4>
+      <p>
+        Apparently, Nix is a package manager that works on a functional programming language,
+        called <em>Nix</em>, which is interesting as I'm interested in functional programming.
+      </p>
+      <p>
+        I'm obviously not going to opt into using nixOS or nix for my host system just right now.
+        For now, the middleground for me seems to just use nix in my host system to build a nixOS system and run it on <strong>QEMU</strong>.
+      </p>
+      <blockquote>PS: QEMU is a great tool to emulate a PC environment.</blockquote>
+
+      <h4><em>pacman -Q nix</em></h4>
+      <p>
+        Something I realized off the boat was that for some reason, nix has majority of their "useful"
+        utilities and tools under an experimental feature, which seems quite odd.
+      </p>
+      <pre>sudo pacman -S nix</pre>
+      <p>I'll have to make sure that locked features like nix-shell and flake are added to: <code>/etc/nix/nix.conf</code></p>
+      <pre>experimental-features = nix-command flakes</pre>
+
+      <h4><em>nix --help</em></h4>
+      <p>
+        So apparently, nix uses flakes for packaging and reproducing builds, which seems
+        analogous to cargo for rust. The nix package repository stores all the nix packages in the form
+        of nix expressions or sometimes a flake itself.
+      </p>
+
+      <h4><em>nix flake init</em></h4>
+      <p>
+        So, looking into how nix works, it seems to me that I've gone ahead and built a simple
+        hierarchy of how my files are structured and how the flake is going to look, and named the
+        configuration <strong>kanto</strong>.
+      </p>
+      <pre>nix flake init</pre>
+      <pre>
+├── flake.lock
+├── flake.nix
+├── hosts
+│   └── kanto
+│       ├── default.nix
+│       ├── hardware.nix
+│       ├── services.nix
+│       └── users.nix
+├── justfile
+├── README.md
+└── result -> /nix/store/jibberish-hash</pre>
+      <pre>
+hosts/  - Holds configuration for multiple hosts
+kanto/  - Holds configuration for kanto
+
+default.nix   - entrypoint
+hardware.nix  - fs and bootloader
+users.nix     - user config
+services.nix  - daemons</pre>
+
+      <h3>Configuration</h3>
+
+      <h4><em>{…} : {}</em></h4>
+      <p>
+        Since the most interesting part of nix is about how I can "declare" my OS,
+        I ended up writing:
+      </p>
+      <pre>
+default.nix
+
+{ config, pkgs, ... }:
+
+{
+  imports = [ ./hardware.nix ./users.nix ./services.nix ];
+  networking.hostName = "kanto";
+  time.timeZone = "Asia/Kathmandu";
+  system.stateVersion = "24.11";
+}</pre>
+      <p>
+        <code>{config, pkgs, ...}:</code> — This essentially introduces my flake's function which takes in a config, pkgs, and a variadic.
+      </p>
+      <p>
+        <code>{ bunch of declarations }</code> — This is the block; it returns an object with import, networking, time and system fields, which define our system.
+      </p>
+
+      <h4>nix build</h4>
+      <p>This makes our configuration able to run on QEMU. Let's try to build it:</p>
+      <pre>nix run nixpkgs#nixos-rebuild -- build-vm --flake .#kanto</pre>
+      <blockquote>'#' here is the fragment specifier — I liked to think of it as a package access specifier, like accessing the package from a flake.</blockquote>
+
+      <p>It works, but I might've cheated, as I've already written some declarations in some of the files.</p>
+
+      <pre>
+hardware.nix
+
+{ config, ... }:
+
+{
+  boot.loader = {
+    grub = {
+      enable = true;
+      efiSupport = true;
+      device = "nodev";
+    };
+    efi.canTouchEfiVariables = true;
+  };
+
+  fileSystems."/" = {
+    device = "/dev/disk/by-label/nixos";
+    fsType = "ext4";
+    options = [ "noatime" ];
+  };
+
+  fileSystems."/boot" = {
+    device = "/dev/disk/by-label/BOOT";
+    fsType = "vfat";
+  };
+  swapDevices = [
+  { device = "/dev/disk/by-label/swap"; }
+  ];
+}</pre>
+
+      <p>This defines my hardware, currently assumed that my system has simple dual partitions:</p>
+      <pre>
+"/"     - primary partition
+"/boot" - boot partition</pre>
+
+      <blockquote>
+        <strong>Nix</strong> actually stores each of its rebuilds as <strong>generations</strong> and allows
+        the user to boot into any of its builds, hence making it extremely <strong>tolerant</strong> to any
+        faulty builds.
+      </blockquote>
+
+      <pre>
+users.nix
+
+{config, pkgs, ...}:
+
+{
+  users.users.irhs = {
+    isNormalUser = true;
+    description = "Admin";
+    extraGroups = [ "networkmanager" "wheel" ];
+    openssh.authorizedKeys.keys= [
+        "your-ssh-pub-key"
+    ];
+  };
+  programs.zsh.enable = true;
+}</pre>
+
+      <p>Here, we're declaring a simple user called "irhs". This structure has a high resemblance to recursive structures defined in LISP:</p>
+
+      <pre>
+'((
+users . ((
+  users . ((
+    irhs . ((
+      ; above configuration
+    ))
+  ))
+))
+))</pre>
+
+      <blockquote>
+        This essentially shows how the origin of nix was highly inspired from LISP and how it has vastly simplified it.
+        In my mind, I've mostly been reiterating how nix seemed really familiar with my time configuring emacs.
+      </blockquote>
+
+      <p>
+        Now for the final part, I have to ensure that I am able to remotely access the machine, so I have to set up sshd,
+        for which I'll have to populate <code>services.nix</code>.
+      </p>
+
+      <pre>
+services.nix
+
+{ config, pkgs, ... }:
+{
+    services = {
+      openssh = {
+          enable = true;
+          settings.PermitRootLogin = "no";
+          settings.PasswordAuthentication = true;
+        };
+    };
+}</pre>
+
+      <p>This is relatively straightforward, and now if I build the OS:</p>
+
+      <pre>
+building the system configuration...
+Done. The virtual machine can be started by running /nix/store/2b59ryh0v0fan4wr8q0b04b2zniz4srp-nixos-vm/bin/run-kanto-vm</pre>
+
+      <h4><code>run-kanto-vm</code></h4>
+      <blockquote>
+        Actually, all the packages that I intend on adding to my system in the future
+        are stored in a central repository <code>/nix/store</code> in my system.
+        And it successfully boots into NixOS. We'll have to try to ssh into it.
+      </blockquote>
+
+      <img src="https://i.imgur.com/CGYmuBT.png" alt="Login Menu" style="max-width:90%; margin: 1rem 0;">
+      <p>And well it works as well.</p>
+      <img src="https://i.imgur.com/hT4lEHh.png" alt="SSH Prompt" style="max-width:90%; margin: 1rem 0;">
+
+      <h3>Finishing up</h3>
+
+      <p>
+        Nix isn't just a package manager; it's an abstraction layer over the messiness of Linux.
+      </p>
+      <p>
+        By treating my OS like my emacs configuration — with simpler syntax and a large amount of
+        packages — I can avoid imperative deficiencies like failing commands and instead enjoy the functional
+        reliability of declaring my operating system.
+      </p>
+      <blockquote>
+        For anybody looking into this article, this is not something you should follow —
+        I've only written this as a note to myself and to understand about Nix a little bit more.
+      </blockquote>
+
+    </div>
+  </div>
+</div>
+
+<div class="end_container">
+  <div class="page_card">
+    <div class="page_head_subsection">
+      <p id="page_head_subtitle">
+        ← <a href="./is-it-me-or-is-it-we.html">Is it me or is it we?</a>
+        &nbsp;&nbsp;
+        <a href="./on-productiveness.html">On Productiveness</a> →
+      </p>
+    </div>
+  </div>
+</div>
+
+<footer style="margin: 1rem;">
+  made with &lt;3 by shri.
+</footer>
+
+</body>
+</html>

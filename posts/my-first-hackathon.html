@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My First Hackathon — Shriharsh S. Acharya</title>
+  <link href="../style.css" rel="stylesheet">
+  <style>
+    img { max-width: 90%; margin: 1rem 0; }
+    hr { border: none; border-top: 1px solid #ccc; margin: 1.5rem 0; width: 90%; }
+    ul li { margin-bottom: 0.4rem; }
+  </style>
+</head>
+<body>
+
+<div class="middle_container">
+  <div class="page_card">
+    <h2>My First Hackathon</h2>
+    <p id="page_head_subtitle">10 March 2024 · 864 words · ~5 mins</p>
+    <p id="page_head_subtitle">#hackathon #arduino #hardware #hack</p>
+
+    <div class="page_head_subsection">
+
+      <p>
+        It was a random call by my friend which led me into trying the hardware hackathon.
+      </p>
+      <p><strong>Spoiler</strong>: We built a bionic arm.</p>
+
+      <img src="https://shriharsh.com.np/images/bionic_arm.jpg" alt="Bionic Arm">
+
+      <hr>
+
+      <h3>Pre-Story</h3>
+      <p>
+        Not the hardware part but as a whole, a hardware hackathon to me was really the first one I had attended.
+        It was on a tight schedule because it was really in the midst of my internals — but that's out of topic. So, let us let it be.
+      </p>
+      <p>
+        I rushed to the hall where it was to be started. When I came, the time had already started and we were revealed the theme.
+      </p>
+
+      <hr>
+
+      <h3>First 5 Hours</h3>
+      <p>The theme was to create something that was sellable.</p>
+      <p>
+        The first 5 hours were quite normal. We brainstormed — as all of us were quite new to it, we were very unsure of what to build
+        and how to go about it. We took ideas from everyone and we stumbled on the idea of building a <em>Smart Vacuum Cleaner</em>.
+        Not the most original, but we were thinking of implementing a local positioning system.
+      </p>
+      <p>It was given a thumbs up by the team members.</p>
+
+      <hr>
+
+      <h3>5–10 Hours</h3>
+      <p>
+        We thought it to be easy at first and tried building a sort of heatmap of where the vacuum cleaner would suck the most dust.
+        From that data we would provide it to the user and make them know about the specific spots of dust collection in the space.
+      </p>
+      <p>
+        For the designing part, me and my other friend were assigned to it and built a diagram on paper which kind of looked like this:
+      </p>
+      <img src="https://shriharsh.com.np/images/design.jpg" alt="Design sketch">
+      <p>Pretty cute, isn't it.</p>
+      <p>
+        For the hardware implementation, we were allowed to use just the Arduino Nano along with the necessary components.
+        I then shifted towards the software — yet, it was about time I got really tired. I had spent most of my time trying to
+        learn how to code the DAMN arduino. So, I also had gotten frustrated. So, I slept.
+      </p>
+      <p><em>ZZzZZZZzzZZZzzZZZ</em></p>
+      <p>
+        Right after I woke up — the guys had just made the thing move. YES IT ACTUALLY MOVED. They ended up re-wiring the whole
+        thing and made the right adjustments for the robot with the help of Nirjal Da. But the revelation only lasted so long;
+        they were tired, so I had to boot myself up and work on the software for the turning and rotation mechanisms.
+      </p>
+
+      <hr>
+
+      <h3>10–15 Hours</h3>
+      <p>
+        I ended up implementing the rotation and learning about the pins and the motor driver that way. It was the time where I
+        had learnt the most during the hackathon. (The majority of other time was messing around and playing around.)
+      </p>
+
+      <hr>
+
+      <h3>Technical Part</h3>
+      <p>
+        So, for the motor drivers and the arduino part — this is what I understood and could explain.
+      </p>
+      <p>
+        Arduinos are a variety of MCU. The one provided to us — the Nano — works at 5V as its supply. It usually works with
+        power supplied via USB connected to an external device while flashing.
+      </p>
+      <p>
+        For our circuitry, it works in the following way if simplified while sending the signals from the arduino to the motors:
+      </p>
+      <img src="https://shriharsh.com.np/images/unga_bunga_circuit.jpg" alt="Circuit diagram">
+      <p><code>(nano -> m-driver -> voltage-pins -> motors)</code></p>
+
+      <h4>Signal Types</h4>
+      <ul>
+        <li><strong>Analog Signals</strong>: Analog Signals are the continuous signals.</li>
+        <li><strong>Digital Signals</strong>: Digital Signals are discrete value containing signals.</li>
+      </ul>
+      <img src="https://shriharsh.com.np/images/digital_analog.png" alt="Digital vs Analog">
+      <ul>
+        <li>
+          <strong>PWM (Pulse Width Modulation)</strong>: The process of modulation of a wave such that the wave is made a single way,
+          by the use of digital signals.
+        </li>
+      </ul>
+
+      <p>
+        So, we used the PWM supporting pins in the Arduino Nano to control the speed of the motor using the enable A and enable B
+        pins in the motor driver. The remaining 4 pins were utilized in supplying digital signal without PWM, which solely sent data
+        to either rotate or not rotate the motor.
+      </p>
+
+      <img src="https://shriharsh.com.np/images/unga_bunga_circuit_zoomed.jpg" alt="Circuit zoomed">
+
+      <p>
+        The code was pretty easy as it was a black box and we only had to use the Arduino IDE to flash and compile. It just required
+        setting up all the required data in the <code>setup()</code> function and all the necessary data in the <code>loop()</code> function.
+        The most important thing I learnt about programming arduino was that there shouldn't be much or any use of loops because they
+        interfere with the workings of the hardware and don't supply enough resource to the components. So, always use an if statement.
+      </p>
+
+      <hr>
+
+      <h3>15–24 Hours: The Curveball</h3>
+      <p>
+        Now, this is when we realized that life hit us with a curveball. Although we had ambitious plans, we weren't the most prepared
+        for it since we were new. We were naive, but <strong>curious</strong>. I tried my best to think of something that could bring a
+        better implementation to our project. Nothing could. We weren't able to implement the required algorithms and also we weren't
+        able to set up what we wanted. So, we had to scrap it.
+      </p>
+      <p>
+        So, in the time pressure, we built what we had in the pocket. All we had to do was to create a working hand and for the software,
+        it was ready from an existing project one of us had done.
+      </p>
+      <p>
+        So, we did. I'm kinda tired cause it's almost 1:00 am and I'm kinda bored writing this soooooooo……
+      </p>
+      <p><code>01001110011001010111001001100100</code></p>
+
+    </div>
+  </div>
+</div>
+
+<div class="end_container">
+  <div class="page_card">
+    <div class="page_head_subsection">
+      <p id="page_head_subtitle">
+        <a href="./digital-literacy.html">About Digital Literacy</a> →
+      </p>
+    </div>
+  </div>
+</div>
+
+<footer style="margin: 1rem;">
+  made with &lt;3 by shri.
+</footer>
+
+</body>
+</html>

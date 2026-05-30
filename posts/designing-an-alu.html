@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Designing an 8-bit ALU — Shriharsh S. Acharya</title>
+  <link href="../style.css" rel="stylesheet">
+  <style>
+    pre { background: #f5f5dc; border: 1px solid #ccc; padding: 0.75rem 1rem; overflow-x: auto; width: 90%; font-size: 0.875rem; }
+    code { font-family: monospace; background: #f5f5dc; padding: 0.1rem 0.3rem; }
+    blockquote { border-left: 3px solid #999; margin-left: 0; padding-left: 1rem; color: #444; }
+    table { border-collapse: collapse; width: 90%; margin: 1rem 0; }
+    th, td { border: 1px solid #aaa; padding: 0.4rem 0.75rem; text-align: left; }
+    img { max-width: 90%; margin: 1rem 0; }
+    hr { border: none; border-top: 1px solid #ccc; margin: 1.5rem 0; width: 90%; }
+  </style>
+</head>
+<body>
+
+
+<div class="middle_container">
+  <div class="page_card">
+    <h2>Designing an 8-bit ALU</h2>
+    <p id="page_head_subtitle">4 February 2025 · 664 words · ~4 mins</p>
+
+    <div class="page_head_subsection">
+
+      <p>Rather than overcomplicating things, let's start off with the design:</p>
+
+      <hr>
+
+      <h3>Design Decisions</h3>
+
+      <p>
+        To get a grip on the basics and to build a strong foundation, I decided to research prior ALU designs and go through articles and datasheets with solid community backing.
+      </p>
+      <p>
+        Lucky for me, I stumbled upon a goldmine — a detailed breakdown of the classic <strong>74181 IC</strong>, a 4-bit ALU chip that became a standard reference for simple ALU design.
+      </p>
+
+      <img src="https://upload.wikimedia.org/wikipedia/commons/d/d7/SN74S181N.JPG" alt="74181 IC">
+
+      <p>
+        From its function table, I understood how the chip operates, including the variety of logic and arithmetic operations it supports.
+      </p>
+
+      <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhKiFhIQ22nNmEZygmBd79R414J7YkcmE8dkyUenn1yMSiECKV8l5g_xChCnP9aJf5hL-8TKHt_YOVmjeLJZLQLM3zptUBEhnCznXDlzE4eV_VDB-wjruh2yXIc8iFQXJZT3XS82DXacuaj/w9999/datasheet-74181-operations.png" alt="74181 Operations Table">
+
+      <p>
+        However, after reading discussions about the 74181's internal design, I noticed a bit of division in the community. Some love it for its elegance; others think it's unnecessarily complex.
+      </p>
+      <p>
+        So, I decided to go with a more minimal and modular approach tailored to my own understanding.
+        And instead of sticking with a 4-bit design like the original 74181, I <strong>upgraded to an 8-bit ALU</strong>. This gave me more headroom for meaningful operations while still keeping the design manageable.
+      </p>
+
+      <hr>
+
+      <h4>OPCODE Mapping (8-bit ALU)</h4>
+
+      <p>To control the operations, I created a simple <code>4-bit OPCODE</code> system, allowing for <strong>16 unique instructions</strong>:</p>
+
+      <table>
+        <tr><th>OPCODE</th><th>UNIT</th><th>OPERATION</th><th>DESCRIPTION</th></tr>
+        <tr><td><code>0000</code></td><td>AU</td><td><code>ADDC</code></td><td>Add with Carry</td></tr>
+        <tr><td><code>0001</code></td><td>AU</td><td><code>SUBC</code></td><td>Subtract with Carry</td></tr>
+        <tr><td><code>0010</code></td><td>AU</td><td><code>ADDO</code></td><td>Add with Overflow</td></tr>
+        <tr><td><code>0011</code></td><td>AU</td><td><code>SUBO</code></td><td>Subtract with Overflow</td></tr>
+        <tr><td><code>1000</code></td><td>LU</td><td><code>XOR</code></td><td>Bitwise XOR</td></tr>
+        <tr><td><code>1001</code></td><td>LU</td><td><code>NOT</code></td><td>Bitwise NOT</td></tr>
+        <tr><td><code>1010</code></td><td>LU</td><td><code>AND</code></td><td>Bitwise AND</td></tr>
+        <tr><td><code>1011</code></td><td>LU</td><td><code>OR</code></td><td>Bitwise OR</td></tr>
+        <tr><td><code>1100</code></td><td>LU</td><td><code>NAND</code></td><td>Bitwise NAND</td></tr>
+        <tr><td><code>1101</code></td><td>LU</td><td><code>NOP</code></td><td>No Operation</td></tr>
+        <tr><td><code>1110</code></td><td>LU</td><td><code>XNOR</code></td><td>Bitwise XNOR</td></tr>
+        <tr><td><code>1111</code></td><td>LU</td><td><code>NOR</code></td><td>Bitwise NOR</td></tr>
+      </table>
+
+      <hr>
+
+      <h3>Final Design Specs</h3>
+
+      <h4>FLAGS</h4>
+      <table>
+        <tr><th>FLAG</th><th>Description</th></tr>
+        <tr><td><code>OVERFLOW</code></td><td><em>Only for signed addition operations</em></td></tr>
+        <tr><td><code>ZERO</code></td><td><em>Set if result is zero</em></td></tr>
+        <tr><td><code>NEGATIVE</code></td><td><em>Only for subtraction operations</em></td></tr>
+        <tr><td><code>CARRY</code></td><td><em>For additions exceeding 8-bit limits</em></td></tr>
+      </table>
+
+      <h4>BUS Layout</h4>
+      <table>
+        <tr><th>BUS</th><th>WIDTH</th></tr>
+        <tr><td><code>INPUT_BUS</code></td><td>8</td></tr>
+        <tr><td><code>OP_CODE</code></td><td>4</td></tr>
+        <tr><td><code>OUTPUT_BUS</code></td><td>8</td></tr>
+        <tr><td><code>STATUS_IN</code></td><td>1</td></tr>
+        <tr><td><code>STATUS_OUT</code></td><td>4</td></tr>
+      </table>
+
+      <hr>
+
+      <h3>Workflow</h3>
+
+      <p>
+        My approach wasn't exactly linear — I leaned into an <strong>iterative workflow</strong>, learning from each version of the build. Each iteration gave me new insights and helped polish the final design step by step.
+      </p>
+
+      <hr>
+
+      <h3>Design Implementation &amp; Selection</h3>
+
+      <p>
+        I experimented with multiple logic gates and missed a few things here and there.<br>
+        Here's my implementation for the AU, which is quite conventional.
+      </p>
+
+      <img src="https://i.imgur.com/LjeHghY.png" alt="1 BIT AU">
+
+      <p>Here, the AU performs the selection of operations:</p>
+
+      <table>
+        <tr><th>OP_CODE</th><th>OPERATION</th></tr>
+        <tr><td><code>x00</code></td><td><code>ADDC</code></td></tr>
+        <tr><td><code>x01</code></td><td><code>SUBC</code></td></tr>
+        <tr><td><code>x10</code></td><td><code>ADDO</code></td></tr>
+        <tr><td><code>x11</code></td><td><code>SUBO</code></td></tr>
+      </table>
+
+      <img src="https://i.imgur.com/ttLyGsv.png" alt="1 BIT LU">
+
+      <p>Similarly, the LU performs the Logical Operations:</p>
+
+      <table>
+        <tr><th>OP_CODE</th><th>OPERATION</th></tr>
+        <tr><td><code>000</code></td><td><code>XOR</code></td></tr>
+        <tr><td><code>001</code></td><td><code>NOT</code></td></tr>
+        <tr><td><code>010</code></td><td><code>AND</code></td></tr>
+        <tr><td><code>011</code></td><td><code>OR</code></td></tr>
+        <tr><td><code>100</code></td><td><code>NAND</code></td></tr>
+        <tr><td><code>101</code></td><td><code>NOP</code></td></tr>
+        <tr><td><code>110</code></td><td><code>XNOR</code></td></tr>
+        <tr><td><code>111</code></td><td><code>NOR</code></td></tr>
+      </table>
+
+      <blockquote><em>Note: The lack of the last bit of the input OPCODE is because it will be used to choose between the AU and the LU.</em></blockquote>
+
+      <img src="https://i.imgur.com/aJvg3fe.png" alt="1 BIT ALU">
+
+      <p>
+        Finally, this is the fundamental block for the operation of the ALU — the mighty <strong>1-bit ALU</strong>.
+      </p>
+
+      <p>
+        Now that the hard part of designing the fundamentals is done, the more <em>complex-looking</em> block comes into play, where all of the smaller blocks are copied and pasted to get a final design like this:
+      </p>
+
+      <img src="https://i.imgur.com/MQs2aKr.png" alt="8 BIT ALU">
+
+      <p>
+        This implementation of the <strong>8-bit ALU</strong> is very basic and might contain unnecessary operations.
+        Yet, I call it <em>not unnecessary</em>, as more or less all the required operations have to be implemented — and the added operations that are implemented within it are always dependent on the task to be accomplished.
+      </p>
+
+      <p>
+        Playing around with the final block, I implemented the input as <code>8-bit</code> registers which can be manipulated by the user, and the output from the previous carry is fed back into the register as a part of operation in the ALU.
+      </p>
+
+      <img src="https://i.imgur.com/48cMpcM.png" alt="Playing Around">
+
+      <p>
+        I personally didn't get into the HDL or VHDL implementation of these circuits, as they were quite irrelevant and out of my expertise at the time.
+      </p>
+
+      <hr>
+
+      <h3>References</h3>
+      <ul>
+        <li><a href="https://teaching.idallen.com/dat2343/10f/notes/040_overflow.txt" target="_blank">Overflow vs Carry Flag – Explanation</a></li>
+        <li><a href="https://en.wikipedia.org/wiki/Arithmetic_logic_unit" target="_blank">Arithmetic Logic Unit - Wikipedia</a></li>
+      </ul>
+
+    </div>
+  </div>
+</div>
+
+<div class="end_container">
+  <div class="page_card">
+    <div class="page_head_subsection">
+      <p id="page_head_subtitle">
+        ← <a href="./digital-literacy.html">About Digital Literacy</a>
+        &nbsp;&nbsp;
+        <a href="./ideals.html">Ideals</a> →
+      </p>
+    </div>
+  </div>
+</div>
+
+<footer style="margin: 1rem;">
+  made with &lt;3 by shri.
+</footer>
+
+</body>
+</html>
